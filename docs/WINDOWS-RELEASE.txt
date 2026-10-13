@@ -1,0 +1,32 @@
+CrawlDesk 2.0.0 — Windows x64
+
+GET STARTED
+1. Extract the ZIP into a folder on your computer.
+2. Double-click CrawlDesk.exe.
+3. Enter a public website URL, or select Try a sample crawl.
+
+Python is bundled; no Python installation is required.
+Requires Windows 10/11 x64, Microsoft Edge WebView2 Runtime, and .NET Framework
+4.8 or newer. These runtimes are normally available on current Windows systems.
+This portable build is unsigned.
+
+Microsoft WebView2 Runtime:
+https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+
+Data and saved appearance preferences are stored in:
+%LOCALAPPDATA%\CrawlDesk
+
+FEATURES
+- Light/dark appearance, live progress, pause/resume/stop.
+- Searchable page results, metadata insights, page inspector, activity log.
+- Configurable limits, robots.txt support, same-origin crawling.
+- Local crawl history, CSV/JSON/JSONL exports.
+
+The sample crawl contains fictional data. Metadata checks are review hints,
+not a complete SEO audit. Websites requiring JavaScript rendering or sign-in
+are not supported. Crawl only websites you are authorized to explore.
+
+Source, documentation, and issue tracker:
+https://github.com/Arjunren/CrawlDesk
+
+License: MIT. See LICENSE in this folder.

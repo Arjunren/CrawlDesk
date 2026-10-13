@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import sys
 import threading
+import tempfile
 import time
 import uuid
 
@@ -319,11 +320,65 @@ def asset_root() -> Path:
     return Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 
 
+def smoke_test(report_path: Path) -> int:
+    """Check the actual renderer and bridge in source and frozen builds."""
+    import webview
+    result = {"ok": False, "version": APP_VERSION, "frozen": bool(getattr(sys, "frozen", False))}
+    ready = threading.Event()
+    with tempfile.TemporaryDirectory() as directory:
+        api = DesktopAPI(Path(directory))
+        window = webview.create_window("CrawlDesk release verification", str(asset_root() / "ui" / "index.html"),
+                                       js_api=api, width=1280, height=850, hidden=True)
+        api._window = window
+        window.events.loaded += ready.set
+        def checks():
+            try:
+                if not ready.wait(20):
+                    raise RuntimeError("Desktop renderer did not load")
+                deadline = time.monotonic() + 20
+                while time.monotonic() < deadline:
+                    connected = window.evaluate_js("document.getElementById('connection').textContent")
+                    if connected == "Desktop connected":
+                        break
+                    time.sleep(.2)
+                if connected != "Desktop connected":
+                    raise RuntimeError("Python-JavaScript bridge did not connect")
+                window.evaluate_js("document.getElementById('demo-button').click(); true")
+                deadline = time.monotonic() + 10
+                while time.monotonic() < deadline:
+                    rows = window.evaluate_js("document.querySelectorAll('#results-body tr').length")
+                    if rows == 6:
+                        break
+                    time.sleep(.2)
+                if rows != 6 or api.get_state()["status"] != "demo":
+                    raise RuntimeError("Bundled interface did not render sample results")
+                # Verify exports and local storage within the bundled Python runtime.
+                pages = api.get_state()["pages"]
+                if len(json.loads(serialize_export(pages, "json"))) != 6:
+                    raise RuntimeError("Bundled export failed")
+                if not api.save_preferences({"theme": "dark"})["ok"]:
+                    raise RuntimeError("Local preference storage failed")
+                result.update(ok=True, renderer=webview.guilib.renderer, rows=rows)
+            except Exception as exc:
+                result["error"] = str(exc)
+            finally:
+                window.destroy()
+        webview.start(checks)
+    report_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    return 0 if result["ok"] else 1
+
+
 def main() -> None:
     try:
         import webview
     except ImportError:
         raise SystemExit("Install desktop dependencies first: python -m pip install -r requirements.txt")
+    if "--smoke-test" in sys.argv:
+        try:
+            report_path = Path(sys.argv[sys.argv.index("--smoke-test") + 1])
+        except IndexError:
+            raise SystemExit("Usage: CrawlDesk.exe --smoke-test REPORT.json")
+        raise SystemExit(smoke_test(report_path))
     api = DesktopAPI()
     api._window = webview.create_window("CrawlDesk", str(asset_root() / "ui" / "index.html"),
         js_api=api, width=1380, height=900, min_size=(980, 680),

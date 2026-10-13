@@ -22,6 +22,10 @@ Built with **pywebview**, HTML/CSS/JavaScript, and a Python standard-library cra
 
 ## Install and run on Windows
 
+**Portable app:** Download `CrawlDesk-2.0.0-windows-x64.zip` from [GitHub Releases](https://github.com/Arjunren/CrawlDesk/releases/latest), extract it, and open `CrawlDesk.exe`. Python is bundled. The release includes instructions, an MIT license, and SHA-256 checksums. Requires Windows 10/11 x64, Edge WebView2 Runtime, and .NET Framework 4.8 or newer; the executable is unsigned.
+
+**Run from source:**
+
 Requires **Python 3.11+** and the **Microsoft Edge WebView2 Runtime**, normally present on modern Windows systems. Tested on Windows with Python 3.14 and pywebview 6.2.1 using the Edge Chromium renderer.
 
 In PowerShell, from the project folder:
@@ -104,7 +108,19 @@ tests/                     Backend regression tests
 tools/                     Browser and native renderer acceptance checks
 launch.bat                 Windows launcher
 setup.ps1                  Windows environment setup
+tools/build_release.py     Verified Windows executable and ZIP packaging
 ```
+
+## Build a Windows release
+
+On Windows x64, install `requirements-build.txt` into the virtual environment and run:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-build.txt
+.\.venv\Scripts\python.exe tools/build_release.py
+```
+
+The build bundles the UI assets and Python runtime, executes the frozen app in a hidden window, verifies the native renderer, bridge, sample results, exports, and local storage, and then writes the executable, portable ZIP, build manifest, and checksums to `dist/`. The manifest records the source commit. The icon is an original CrawlDesk brand asset.
 
 ## License
 
